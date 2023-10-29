@@ -15,10 +15,8 @@ public class AnalysisManager
 
     public async Task AnalyzeStocksAsync()
     {
-        var symbols = await this.referenceDataService.GetSymbolsAsync();
         var marketHolidays = await this.referenceDataService.GetMarketHolidaysAsync();
 
-        _ = symbols;
         _ = marketHolidays;
     }
 }

@@ -1,45 +1,30 @@
 ﻿using HunterX.Trader.Application.Services.Interfaces;
 using HunterX.Trader.Common.Configuration;
 using HunterX.Trader.Common.Logging;
+using HunterX.Trader.Domain.Common.Enums;
 using HunterX.Trader.Domain.StrategySelection.ValueObjects;
-using HunterX.Trader.Infrastructure.Databases.Repositories;
 using HunterX.Trader.Infrastructure.Services.ReferenceData.FinancialModelingPrep.Models;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
 namespace HunterX.Trader.Infrastructure.Services.ReferenceData.FinancialModelingPrep;
 
-public class FMPReferenceDataService : IReferenceDataService
+public class FMPReferenceDataService
 {
     private const string apiDomain = "https://financialmodelingprep.com";
     private readonly string apiKey;
     private readonly ApiThrottler apiThrottler;
     private readonly IHttpClientFactory httpClientFactory;
-    private readonly ReferenceDataRepository referenceDataRepository;
 
-
-    public FMPReferenceDataService(AppSettings appSettings, IHttpClientFactory httpClientFactory, ReferenceDataRepository referenceDataRepository)
+    public FMPReferenceDataService(AppSettings appSettings, IHttpClientFactory httpClientFactory)
     {
         apiKey = appSettings.PolygonKey;
         apiThrottler = new ApiThrottler(750, TimeSpan.FromMinutes(1));
         this.httpClientFactory = httpClientFactory;
-        this.referenceDataRepository = referenceDataRepository;
     }
 
-    public async Task<IReadOnlyList<MarketHoliday>> GetMarketHolidaysAsync()
+    public async Task<IReadOnlyList<StockBasics>> GetUniverseStockBasicsAsync(UniverseCriteria criteria)
     {
-    }
-
-    public async Task<IReadOnlyList<StockBasics>> GetSymbolsAsync(UniverseCriteria criteria)
-    {
-        var tickers = await referenceDataRepository.GetTickerSymbolsAsync();
-
-        if (tickers.Count > 0 && tickers[0].CreatedAt > DateTime.UtcNow.Date)
-        {
-            Logger.Information("Using {Count} Ticker Symbols from Database.", tickers.Count);
-            return tickers;
-        }
-
         Logger.Information("Fetching Ticker Symbols from Polygon.");
 
         var updatedTickers = new List<TickerSymbol>();
@@ -54,12 +39,20 @@ public class FMPReferenceDataService : IReferenceDataService
         var json = await response.Content.ReadAsStringAsync();
         var result = JsonSerializer.Deserialize<StockResponse[]>(json) ?? throw new JsonException("Received null from json deserialization.");
 
-        updatedTickers.AddRange(result.Select(t => new TickerSymbol(t.Symbol, t.CompanyName, t.ExchangeShortName, MakeMarketType(t.Market), DateTime.UtcNow)));
+        updatedTickers.AddRange(result.Select(t => new TickerSymbol(t.Symbol, t.CompanyName, t.ExchangeShortName, MakeMarketType("stocks"), DateTime.UtcNow)));
 
         Logger.Information("Found {Count} Ticker Symbols from Polygon. Saving to Database.", updatedTickers.Count);
 
-        await referenceDataRepository.SaveTickerSymbolsAsync(updatedTickers);
+        return null;
+    }
 
-        return updatedTickers;
+    private static MarketType MakeMarketType(string market)
+    {
+        return market switch
+        {
+            "stocks" => MarketType.Stocks,
+            "crypto" => MarketType.Crypto,
+            _ => throw new Exception($"Unknown market type string {market}.")
+        };
     }
 }

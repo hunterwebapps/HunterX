@@ -1,10 +1,8 @@
-﻿using HunterX.Trader.Application.Services.Interfaces;
-using HunterX.Trader.Common.Configuration;
+﻿using HunterX.Trader.Common.Configuration;
 using HunterX.Trader.Common.Logging;
 using HunterX.Trader.Domain.Common.Enums;
 using HunterX.Trader.Domain.StrategySelection.ValueObjects;
-using HunterX.Trader.Infrastructure.Databases.Entities;
-using HunterX.Trader.Infrastructure.Services.ReferenceData;
+using HunterX.Trader.Infrastructure.Databases.Repositories;
 using HunterX.Trader.Infrastructure.Services.ReferenceData.Polygon.Models.Holidays;
 using HunterX.Trader.Infrastructure.Services.ReferenceData.Polygon.Models.Tickers;
 using System.Net.Http.Headers;
@@ -12,7 +10,7 @@ using System.Text.Json;
 
 namespace HunterX.Trader.Infrastructure.Services.ReferenceData.Polygon;
 
-public class PolygonReferenceDataService : IReferenceDataService
+public class PolygonReferenceDataService
 {
     private const string apiDomain = "https://api.polygon.io";
     private readonly string apiKey;
@@ -30,9 +28,9 @@ public class PolygonReferenceDataService : IReferenceDataService
 
     public async Task<IReadOnlyList<TickerSymbol>> GetSymbolsAsync()
     {
-        var tickers = await referenceDataRepository.GetTickerSymbolsAsync();
+        var tickers = await this.referenceDataRepository.GetTickerSymbolsAsync();
 
-        if (tickers.Count > 0 && tickers[0].CreatedAt > DateTime.UtcNow.Date)
+        if (tickers.Count > 0 && tickers[0].Created > DateTime.UtcNow.Date)
         {
             Logger.Information("Using {Count} Ticker Symbols from Database.", tickers.Count);
             return tickers;
@@ -69,16 +67,16 @@ public class PolygonReferenceDataService : IReferenceDataService
 
         Logger.Information("Found {Count} Ticker Symbols from Polygon. Saving to Database.", updatedTickers.Count);
 
-        await referenceDataRepository.SaveTickerSymbolsAsync(updatedTickers);
+        await this.referenceDataRepository.InsertTickerSymbolsAsync(updatedTickers);
 
         return updatedTickers;
     }
 
     public async Task<IReadOnlyList<MarketHoliday>> GetMarketHolidaysAsync()
     {
-        var holidays = await referenceDataRepository.GetMarketHolidaysAsync();
+        var holidays = await this.referenceDataRepository.GetMarketHolidaysAsync();
 
-        if (holidays.Count > 0 && holidays[0].CreatedAt > DateTime.UtcNow.Date.AddMonths(-1))
+        if (holidays.Count > 0 && holidays[0].Created > DateTime.UtcNow.Date.AddMonths(-1))
         {
             Logger.Information("Using {Count} Market Holidays from Database.", holidays.Count);
             return holidays;
@@ -114,7 +112,7 @@ public class PolygonReferenceDataService : IReferenceDataService
 
         Logger.Information("Found {Count} Market Holidays from Polygon. Saving to Database.", updatedHolidays.Count);
 
-        await referenceDataRepository.SaveMarketHolidaysAsync(updatedHolidays);
+        await referenceDataRepository.InsertMarketHolidaysAsync(updatedHolidays);
 
         return updatedHolidays;
     }

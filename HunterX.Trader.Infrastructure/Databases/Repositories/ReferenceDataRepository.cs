@@ -14,14 +14,16 @@ public class ReferenceDataRepository
         this.tradingDbContext = tradingDbContext;
     }
 
-    public async Task<IEnumerable<TickerSymbol>> GetTickerSymbolsAsync()
+    public async Task<List<TickerSymbol>> GetTickerSymbolsAsync()
     {
         var entities = await this.tradingDbContext.TickerSymbols.ToListAsync();
 
-        return entities.Select(x => new TickerSymbol(x.Ticker, x.Name, x.Exchange, Enum.Parse<MarketType>(x.Market), x.Created));
+        return entities
+            .Select(x => new TickerSymbol(x.Ticker, x.Name, x.Exchange, Enum.Parse<MarketType>(x.Market), x.Created))
+            .ToList();
     }
 
-    public async Task InsertTickerSymbols(IEnumerable<TickerSymbol> tickerSymbols)
+    public async Task InsertTickerSymbolsAsync(IEnumerable<TickerSymbol> tickerSymbols)
     {
         var entities = tickerSymbols.Select(x => new Entities.TickerSymbol()
         {
@@ -43,14 +45,16 @@ public class ReferenceDataRepository
         await transaction.CommitAsync();
     }
 
-    public async Task<IEnumerable<MarketHoliday>> GetMarketHolidaysAsync()
+    public async Task<List<MarketHoliday>> GetMarketHolidaysAsync()
     {
         var entities = await this.tradingDbContext.MarketHolidays.ToListAsync();
 
-        return entities.Select(x => new MarketHoliday(x.Date, x.Open, x.Close, x.Exchange, x.Name, x.Created));
+        return entities
+            .Select(x => new MarketHoliday(x.Date, x.Open, x.Close, x.Exchange, x.Name, x.Created))
+            .ToList();
     }
 
-    public async Task InsertMarketHolidays(IEnumerable<MarketHoliday> marketHolidays)
+    public async Task InsertMarketHolidaysAsync(IEnumerable<MarketHoliday> marketHolidays)
     {
         var entities = marketHolidays.Select(x => new Entities.MarketHoliday()
         {

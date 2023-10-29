@@ -1,5 +1,6 @@
 ﻿using HunterX.Trader.Application.Managers;
 using HunterX.Trader.Application.Services.Interfaces;
+using HunterX.Trader.Infrastructure.Databases.Repositories;
 using HunterX.Trader.Infrastructure.Services.MarketData.Alpaca;
 using HunterX.Trader.Infrastructure.Services.ReferenceData;
 using HunterX.Trader.Infrastructure.Services.ReferenceData.Polygon;
@@ -15,7 +16,6 @@ public static class StartupDependencyInjection
         hostBuilder
             .ConfigureServices((hostContext, services) =>
             {
-                services.AddSingleton<IReferenceDataService, PolygonReferenceDataService>();
                 services.AddSingleton<IMarketDataService, AlpacaMarketDataService>();
 
                 services.AddTransient<AnalysisManager>();
