@@ -3,4 +3,5 @@
 public class ConnectionStrings
 {
     public string TradingDb { get; set; } = default!;
+    public string MongoDb { get; set; } = default!;
 }

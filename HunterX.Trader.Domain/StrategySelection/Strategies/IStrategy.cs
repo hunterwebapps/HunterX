@@ -1,8 +1,10 @@
-﻿using HunterX.Trader.Domain.StrategySelection.Strategies.ValueObjects;
+﻿using HunterX.Trader.Domain.StrategySelection.Strategies.DecisionData;
 
 namespace HunterX.Trader.Domain.StrategySelection.Strategies;
 
 public interface IStrategy
 {
-    ExecutionDecision DetermineExecutionDecision();
+    string Name { get; }
+    ExecutionDecisionDetails DetermineBuyDecision();
+    ExecutionDecisionDetails DetermineSellDecision();
 }

@@ -2,5 +2,5 @@
 
 public interface IDomainEvent
 {
-    public DateTime Occurred { get; set; }
+    public System.DateTime Occurred { get; set; }
 }

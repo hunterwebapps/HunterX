@@ -1,25 +1,35 @@
 ﻿using HunterX.Trader.Domain.Common;
+using HunterX.Trader.Domain.Common.Interfaces;
 using HunterX.Trader.Domain.StrategySelection.Strategies;
+using HunterX.Trader.Domain.StrategySelection.Strategies.DecisionData;
+using HunterX.Trader.Domain.StrategySelection.Strategies.DecisionData.ValueObjects;
 using HunterX.Trader.Domain.StrategySelection.ValueObjects;
-using MarketAnalysis = HunterX.Trader.Domain.StrategySelection.Analysis.MarketAnalysis;
-using TechnicalAnalysis = HunterX.Trader.Domain.StrategySelection.Analysis.TechnicalAnalysis;
 
 namespace HunterX.Trader.Domain.StrategySelection;
 
 public class StrategySelectionRoot : AggregateRoot
 {
-    private readonly TickerSymbol tickerSymbol;
+    private readonly StockBasics stockBasics;
+    private readonly IReadOnlyList<ChartData> bars;
+    private readonly IDateTimeProvider dateTimeProvider;
 
-    public StrategySelectionRoot(TickerSymbol tickerSymbol) : base(null)
+    public StrategySelectionRoot(StockBasics stockBasics, IReadOnlyList<ChartData> bars, IDateTimeProvider dateTimeProvider) : base(null)
     {
-        this.tickerSymbol = tickerSymbol;
+        this.stockBasics = stockBasics;
+        this.bars = bars;
+        this.dateTimeProvider = dateTimeProvider;
     }
 
-    public IStrategy DetermineStrategy()
+    public IReadOnlyList<ExecutionDecisionDetails> GetExecutionDecisions()
     {
-        var marketAnalysis = new MarketAnalysis();
-        var technicalAnalysis = new TechnicalAnalysis();
+        var decisions = new List<ExecutionDecisionDetails>();
 
-        return null;
+        var trendStrategy = new TrendFollowing(this.stockBasics, this.bars, this.dateTimeProvider);
+
+        var executionDecision = trendStrategy.DetermineBuyDecision();
+
+        decisions.Add(executionDecision);
+
+        return decisions;
     }
 }

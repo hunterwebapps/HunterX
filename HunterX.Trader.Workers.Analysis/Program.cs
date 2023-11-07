@@ -1,15 +1,20 @@
 using HunterX.Trader.Workers.Analysis;
 using HunterX.Trader.Infrastructure.Startup;
+using HunterX.Trader.Infrastructure.Messaging.Configuration;
 
 IHost host = Host.CreateDefaultBuilder(args)
     .AddConfiguration()
     .AddLogging()
-    .AddEntityFramework()
-    .RegisterDependencies()
-    .ConfigureServices(services =>
+    .AddProfiles()
+    .AddMassTransit((appSettings) => new()
     {
-        services.AddHostedService<Analysis>();
+        new ConsumerSettings()
+        {
+            Consumer = typeof(SymbolFeedConsumer),
+            ConcurrencyLimit = appSettings.SymbolFeedConcurrency,
+        },
     })
+    .RegisterDependencies()
     .Build();
 
 host.Run();

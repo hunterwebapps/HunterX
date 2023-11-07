@@ -2,7 +2,8 @@
 
 public enum TradeAction
 {
-    Buy,
-    Sell,
     None,
+    Buy,
+    Short,
+    Sell,
 }

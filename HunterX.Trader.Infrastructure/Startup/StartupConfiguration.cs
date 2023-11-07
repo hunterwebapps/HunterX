@@ -36,6 +36,11 @@ public static class StartupConfiguration
 
                 hostingContext.Configuration.Bind(appSettings);
 
+                if (appSettings.Live && appSettings.BackTesting.Enabled)
+                {
+                    throw new InvalidOperationException("Live and BackTesting cannot be enabled at the same time");
+                }
+
                 services.AddSingleton(appSettings);
             });
 

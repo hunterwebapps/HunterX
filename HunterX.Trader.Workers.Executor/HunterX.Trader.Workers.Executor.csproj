@@ -9,9 +9,11 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.5" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\HunterX.Trader.Application\HunterX.Trader.Application.csproj" />
     <ProjectReference Include="..\HunterX.Trader.Common\HunterX.Trader.Common.csproj" />
     <ProjectReference Include="..\HunterX.Trader.Infrastructure\HunterX.Trader.Infrastructure.csproj" />
   </ItemGroup>

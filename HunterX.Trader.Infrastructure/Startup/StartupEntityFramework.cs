@@ -11,7 +11,7 @@ public static class StartupEntityFramework
         hostBuilder
             .ConfigureServices((hostContext, services) =>
             {
-                services.AddDbContext<TradingDbContext>();
+                services.AddDbContext<TradingSqlDbContext>();
             });
 
         return hostBuilder;

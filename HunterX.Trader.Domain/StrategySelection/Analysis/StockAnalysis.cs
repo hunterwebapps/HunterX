@@ -1,14 +1,14 @@
 ﻿using HunterX.Trader.Domain.Common;
-using HunterX.Trader.Domain.StrategySelection.DecisionData;
+using HunterX.Trader.Domain.StrategySelection.Strategies.DecisionData.ValueObjects;
 using HunterX.Trader.Domain.StrategySelection.ValueObjects;
 
 namespace HunterX.Trader.Domain.StrategySelection.Analysis;
 
 internal class StockAnalysis : Entity
 {
-    private readonly MarketData marketData;
+    private readonly MarketConditions marketData;
 
-    public StockAnalysis(TickerSymbol symbol, MarketData marketData) : base(null)
+    public StockAnalysis(StockSymbol symbol, MarketConditions marketData) : base(null)
     {
         this.marketData = marketData;
     }

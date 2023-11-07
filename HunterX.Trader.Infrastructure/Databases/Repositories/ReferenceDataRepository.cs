@@ -7,27 +7,34 @@ namespace HunterX.Trader.Infrastructure.Databases.Repositories;
 
 public class ReferenceDataRepository
 {
-    private readonly TradingDbContext tradingDbContext;
+    private readonly TradingSqlDbContext tradingDbContext;
 
-    public ReferenceDataRepository(TradingDbContext tradingDbContext)
+    public ReferenceDataRepository(TradingSqlDbContext tradingDbContext)
     {
         this.tradingDbContext = tradingDbContext;
     }
 
-    public async Task<List<TickerSymbol>> GetTickerSymbolsAsync()
+    public async Task<List<StockSymbol>> GetStockSymbolsAsync()
     {
-        var entities = await this.tradingDbContext.TickerSymbols.ToListAsync();
+        var entities = await this.tradingDbContext.StockSymbols.ToListAsync();
 
         return entities
-            .Select(x => new TickerSymbol(x.Ticker, x.Name, x.Exchange, Enum.Parse<MarketType>(x.Market), x.Created))
+            .Select(x => new StockSymbol()
+            {
+                Symbol = x.Symbol,
+                Name = x.Name,
+                Exchange = x.Exchange,
+                Market = Enum.Parse<MarketType>(x.Market),
+                Created = x.Created,
+            })
             .ToList();
     }
 
-    public async Task InsertTickerSymbolsAsync(IEnumerable<TickerSymbol> tickerSymbols)
+    public async Task InsertStockSymbolsAsync(IEnumerable<StockSymbol> stockSymbols)
     {
-        var entities = tickerSymbols.Select(x => new Entities.TickerSymbol()
+        var entities = stockSymbols.Select(x => new Entities.StockSymbol()
         {
-            Ticker = x.Ticker,
+            Symbol = x.Symbol,
             Name = x.Name,
             Exchange = x.Exchange,
             Market = x.Market.ToString(),
@@ -36,9 +43,9 @@ public class ReferenceDataRepository
 
         await using var transaction = await this.tradingDbContext.Database.BeginTransactionAsync(IsolationLevel.Snapshot);
 
-        await this.tradingDbContext.TickerSymbols.ExecuteDeleteAsync();
+        await this.tradingDbContext.StockSymbols.ExecuteDeleteAsync();
 
-        await this.tradingDbContext.TickerSymbols.AddRangeAsync(entities);
+        await this.tradingDbContext.StockSymbols.AddRangeAsync(entities);
 
         await this.tradingDbContext.SaveChangesAsync();
 

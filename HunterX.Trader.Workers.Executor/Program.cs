@@ -1,14 +1,27 @@
 using HunterX.Trader.Workers.Executor;
 using HunterX.Trader.Infrastructure.Startup;
+using HunterX.Trader.Infrastructure.Messaging.Configuration;
 
 IHost host = Host.CreateDefaultBuilder(args)
     .AddConfiguration()
     .AddLogging()
-    .AddEntityFramework()
+    .AddProfiles()
+    .AddMassTransit((appSettings) => new()
+    {
+        new ConsumerSettings()
+        {
+            Consumer = typeof(ExecutionDecisionConsumer),
+        },
+        //new ConsumerSettings()
+        //{
+        //    Consumer = typeof(SellingMonitorConsumer),
+        //    ConcurrencyLimit = 100,
+        //},
+    })
     .RegisterDependencies()
     .ConfigureServices(services =>
     {
-        services.AddHostedService<Buyer>();
+        //services.AddHostedService<SellerFeed>();
     })
     .Build();
 

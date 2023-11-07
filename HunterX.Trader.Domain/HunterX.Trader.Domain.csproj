@@ -6,4 +6,12 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Skender.Stock.Indicators" Version="2.4.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="StrategySelection\Strategies\ValueObjects\" />
+  </ItemGroup>
+
 </Project>
