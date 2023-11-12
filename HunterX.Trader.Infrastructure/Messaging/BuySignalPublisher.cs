@@ -1,5 +1,5 @@
-﻿using HunterX.Trader.Application.Interfaces;
-using HunterX.Trader.Domain.StrategySelection.Strategies.DecisionData.ValueObjects;
+﻿using HunterX.Trader.Domain.Common.Interfaces.Services;
+using HunterX.Trader.Domain.Trading.StrategySelections.Strategies.DecisionData.ValueObjects;
 using MassTransit;
 
 namespace HunterX.Trader.Infrastructure.Messaging;

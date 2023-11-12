@@ -1,6 +1,6 @@
 ﻿using Alpaca.Markets;
 using HunterX.Trader.Common.Configuration;
-using HunterX.Trader.Domain.Purchase.ValueObjects;
+using HunterX.Trader.Domain.Trading.Purchases.ValueObjects;
 
 namespace HunterX.Trader.Infrastructure.Services.MarketData.Alpaca;
 

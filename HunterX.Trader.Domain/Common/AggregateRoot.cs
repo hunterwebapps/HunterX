@@ -7,7 +7,7 @@ public abstract class AggregateRoot : Entity
     private readonly List<IDomainEvent> domainEvents = new();
     internal IReadOnlyList<IDomainEvent> DomainEvents => this.domainEvents.AsReadOnly();
 
-    protected AggregateRoot(Guid? id) : base(id)
+    protected AggregateRoot(Guid? id = null) : base(id)
     { }
 
     protected void AddDomainEvent(IDomainEvent domainEvent)

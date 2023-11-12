@@ -1,0 +1,20 @@
+#See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
+
+FROM mcr.microsoft.com/dotnet/runtime:7.0 AS base
+WORKDIR /app
+
+FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+WORKDIR /src
+COPY ["HunterX.Trader.Workers.Stocks/HunterX.Trader.Workers.Stocks.csproj", "HunterX.Trader.Workers.Stocks/"]
+RUN dotnet restore "HunterX.Trader.Workers.Stocks/HunterX.Trader.Workers.Stocks.csproj"
+COPY . .
+WORKDIR "/src/HunterX.Trader.Workers.Stocks"
+RUN dotnet build "HunterX.Trader.Workers.Stocks.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "HunterX.Trader.Workers.Stocks.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "HunterX.Trader.Workers.Stocks.dll"]

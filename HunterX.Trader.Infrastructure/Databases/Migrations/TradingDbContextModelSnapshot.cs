@@ -47,7 +47,7 @@ namespace HunterX.Trader.Infrastructure.Databases.Migrations
 
                     b.HasKey("Date", "Exchange");
 
-                    b.ToTable("MarketHolidays");
+                    b.ToTable("MarketHolidays", (string)null);
                 });
 
             modelBuilder.Entity("HunterX.Trader.Infrastructure.Databases.Entities.Order", b =>
@@ -134,7 +134,7 @@ namespace HunterX.Trader.Infrastructure.Databases.Migrations
 
                     b.HasIndex("ParentOrderId");
 
-                    b.ToTable("Orders");
+                    b.ToTable("Orders", (string)null);
                 });
 
             modelBuilder.Entity("HunterX.Trader.Infrastructure.Databases.Entities.StockSymbol", b =>
@@ -162,7 +162,7 @@ namespace HunterX.Trader.Infrastructure.Databases.Migrations
 
                     b.HasKey("Symbol", "Exchange");
 
-                    b.ToTable("StockSymbols");
+                    b.ToTable("StockSymbols", (string)null);
                 });
 
             modelBuilder.Entity("HunterX.Trader.Infrastructure.Databases.Entities.Order", b =>

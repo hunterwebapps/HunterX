@@ -1,5 +1,5 @@
-﻿using HunterX.Trader.Application.Interfaces;
-using HunterX.Trader.Domain.Purchase.ValueObjects;
+﻿using HunterX.Trader.Domain.Common.Interfaces.Services;
+using HunterX.Trader.Domain.Trading.Purchases.ValueObjects;
 
 namespace HunterX.Trader.Infrastructure.Services.Brokers.BackTesting;
 

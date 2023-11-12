@@ -1,10 +1,12 @@
-﻿using HunterX.Trader.Application.Interfaces;
-using HunterX.Trader.Common.Logging;
+﻿using HunterX.Trader.Common.Logging;
+using HunterX.Trader.Domain.Common.Enums;
 using HunterX.Trader.Domain.Common.Interfaces;
-using HunterX.Trader.Domain.Purchase.Enums;
-using HunterX.Trader.Domain.Purchase.Interfaces;
-using HunterX.Trader.Domain.Purchase.ValueObjects;
-using HunterX.Trader.Domain.StrategySelection.Strategies.DecisionData.ValueObjects;
+using HunterX.Trader.Domain.Common.Interfaces.Services;
+using HunterX.Trader.Domain.Trading.Purchases.Enums;
+using HunterX.Trader.Domain.Trading.Purchases.Interfaces;
+using HunterX.Trader.Domain.Trading.Purchases.ValueObjects;
+using HunterX.Trader.Domain.Trading.StrategySelections.Strategies.DecisionData.ValueObjects;
+using HunterX.Trader.Domain.Trading.ValueObjects;
 
 namespace HunterX.Trader.Infrastructure.Services.Brokers.BackTesting;
 
@@ -26,7 +28,17 @@ public class BackTestingBrokerService : IBrokerService
         return Task.FromResult(10_000m);
     }
 
-    public Task<Order> ExecuteBuyOrderAsync(ExecutionDecision executionDecision, int quantity)
+    public Task<IReadOnlyList<Position>> GetOpenPositionsAsync()
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<IReadOnlyList<Order>> GetOrderByIdAsync()
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Order> ExecuteOrderAsync(ExecutionDecision executionDecision, int quantity)
     {
         var order = new Order()
         {
@@ -50,12 +62,10 @@ public class BackTestingBrokerService : IBrokerService
                     FilledPrice = null,
                     Legs = new List<Order>(),
                     LimitPrice = null,
-                    OrderedPrice = executionDecision.Price,
                     OrderId = Guid.NewGuid(),
                     OrderSide = OrderSide.Sell,
                     OrderType = OrderType.Stop,
                     Quantity = quantity,
-                    StopLossPrice = executionDecision.Stop,
                     StopOrderPrice = executionDecision.Stop,
                     Symbol = executionDecision.Symbol,
                     TimeInForce = TimeInForce.GoodTilCancel,
@@ -65,12 +75,10 @@ public class BackTestingBrokerService : IBrokerService
                 },
             },
             LimitPrice = null,
-            OrderedPrice = executionDecision.Price,
             OrderId = Guid.NewGuid(),
             OrderSide = OrderSide.Buy,
             OrderType = OrderType.Market,
             Quantity = quantity,
-            StopLossPrice = executionDecision.Stop,
             StopOrderPrice = executionDecision.Stop,
             Symbol = executionDecision.Symbol,
             TimeInForce = TimeInForce.FillOrKill,
@@ -94,7 +102,6 @@ public class BackTestingBrokerService : IBrokerService
 
             this.backTestingStreamingService.SendFilledOrder(new OrderUpdated()
             {
-                Position = quantity,
                 FilledPrice = executionDecision.Price * quantity + averageSlippage,
                 FilledAt = this.dateTimeProvider.Now.DateTime,
                 Symbol = executionDecision.Symbol,
@@ -110,6 +117,21 @@ public class BackTestingBrokerService : IBrokerService
     }
 
     public Task<Order> ExecuteSellOrderAsync(ExecutionDecision executionDecision, int quantity)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Order> GetOrderByIdAsync(Guid orderId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Position> GetPositionAsync(string symbol)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<IReadOnlyList<Order>> GetOpenOrdersAsync()
     {
         throw new NotImplementedException();
     }

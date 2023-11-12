@@ -1,9 +1,9 @@
 ﻿using Alpaca.Markets;
 using Alpaca.Markets.Extensions;
-using HunterX.Trader.Application.Interfaces;
 using HunterX.Trader.Common.Configuration;
 using HunterX.Trader.Common.Logging;
-using HunterX.Trader.Domain.Purchase.ValueObjects;
+using HunterX.Trader.Domain.Common.Interfaces.Services;
+using HunterX.Trader.Domain.Trading.Purchases.ValueObjects;
 using System.Net.WebSockets;
 
 namespace HunterX.Trader.Infrastructure.Services.Brokers.Alpaca;
@@ -75,7 +75,6 @@ public sealed class AlpacaOrderStreamingService : IOrderStreamingService, IDispo
                 this.OrderFilled?.Invoke(this, new OrderUpdated()
                 {
                     Symbol = tradeUpdate.Order.Symbol,
-                    Position = (int)tradeUpdate.PositionIntegerQuantity!.Value,
                     FilledPrice = tradeUpdate.Price!.Value,
                     CancelledAt = tradeUpdate.Order.CancelledAtUtc,
                     ExpiredAt = tradeUpdate.Order.ExpiredAtUtc,
@@ -90,7 +89,6 @@ public sealed class AlpacaOrderStreamingService : IOrderStreamingService, IDispo
                 this.OrderPartiallyFilled?.Invoke(this, new OrderUpdated()
                 {
                     Symbol = tradeUpdate.Order.Symbol,
-                    Position = (int)tradeUpdate.PositionIntegerQuantity!.Value,
                     FilledPrice = tradeUpdate.Price!.Value,
                     CancelledAt = tradeUpdate.Order.CancelledAtUtc,
                     ExpiredAt = tradeUpdate.Order.ExpiredAtUtc,

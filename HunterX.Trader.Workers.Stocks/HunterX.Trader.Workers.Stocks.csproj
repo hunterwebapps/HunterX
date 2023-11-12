@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-HunterX.Trader.Workers-1f7380e4-a76b-4450-bc71-4518f957f378</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.13">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HunterX.Trader.Application\HunterX.Trader.Application.csproj" />
+    <ProjectReference Include="..\HunterX.Trader.Common\HunterX.Trader.Common.csproj" />
+    <ProjectReference Include="..\HunterX.Trader.Domain\HunterX.Trader.Domain.csproj" />
+    <ProjectReference Include="..\HunterX.Trader.Infrastructure\HunterX.Trader.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

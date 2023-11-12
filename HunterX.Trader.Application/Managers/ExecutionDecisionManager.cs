@@ -1,7 +1,7 @@
-﻿using HunterX.Trader.Application.Interfaces;
-using HunterX.Trader.Domain.Common;
-using HunterX.Trader.Domain.StrategySelection.Strategies.DecisionData;
-using HunterX.Trader.Domain.StrategySelection.Strategies.DecisionData.ValueObjects;
+﻿using HunterX.Trader.Domain.Common;
+using HunterX.Trader.Domain.Common.Interfaces.Repositories;
+using HunterX.Trader.Domain.Trading.StrategySelections.Strategies.DecisionData;
+using HunterX.Trader.Domain.Trading.StrategySelections.Strategies.DecisionData.ValueObjects;
 
 namespace HunterX.Trader.Application.Managers;
 

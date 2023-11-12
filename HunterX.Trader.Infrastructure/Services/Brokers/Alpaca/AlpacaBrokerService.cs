@@ -1,10 +1,11 @@
 ﻿using Alpaca.Markets;
 using HunterX.Trader.Common.Configuration;
 using HunterX.Trader.Common.Logging;
-using HunterX.Trader.Domain.Purchase.Interfaces;
-using HunterX.Trader.Domain.Purchase.ValueObjects;
-using HunterX.Trader.Domain.StrategySelection.Strategies.DecisionData.ValueObjects;
-using HunterX.Trader.Domain.StrategySelection.Strategies.Enum;
+using HunterX.Trader.Domain.Trading.Purchases.Interfaces;
+using HunterX.Trader.Domain.Trading.Purchases.ValueObjects;
+using HunterX.Trader.Domain.Trading.StrategySelections.Strategies.DecisionData.ValueObjects;
+using HunterX.Trader.Domain.Trading.StrategySelections.Strategies.Enum;
+using HunterX.Trader.Domain.Trading.ValueObjects;
 
 namespace HunterX.Trader.Infrastructure.Services.Brokers.Alpaca;
 
@@ -32,11 +33,45 @@ public class AlpacaBrokerService : IBrokerService
         return account.BuyingPower ?? 0;
     }
 
-    public async Task<Order> ExecuteBuyOrderAsync(ExecutionDecision executionDecision, int quantity)
+    public async Task<Position> GetPositionAsync(string symbol)
     {
-        if (executionDecision.Action != TradeAction.Buy)
+        var position = await this.tradingClient.GetPositionAsync(symbol);
+
+        return MakePosition(position);
+    }
+
+    public async Task<IReadOnlyList<Position>> GetOpenPositionsAsync()
+    {
+        var positions = await this.tradingClient.ListPositionsAsync();
+
+        return positions
+            .Select(MakePosition)
+            .ToList();
+    }
+
+    public async Task<Order> GetOrderByIdAsync(Guid orderId)
+    {
+        var order = await this.tradingClient.GetOrderAsync(orderId);
+
+        return MakeOrder(order);
+    }
+
+    public async Task<IReadOnlyList<Order>> GetOpenOrdersAsync()
+    {
+        var orders = await this.tradingClient.ListOrdersAsync(new ListOrdersRequest()
         {
-            throw new ArgumentException("Trade Execution must be a Buy.");
+            OrderStatusFilter = OrderStatusFilter.Open,
+            RollUpNestedOrders = true,
+        });
+
+        return orders.Select(MakeOrder).ToList();
+    }
+
+    public async Task<Order> ExecuteOrderAsync(ExecutionDecision executionDecision, int quantity)
+    {
+        if (executionDecision.Action == TradeAction.None)
+        {
+            throw new ArgumentException($"Must have a {nameof(TradeAction)} ({executionDecision.Action}) to execute order.");
         }
 
         var orderId = Guid.NewGuid();
@@ -44,19 +79,35 @@ public class AlpacaBrokerService : IBrokerService
         using var s1 = Logger.AddScope("Execution Decision", executionDecision, destructureObject: true);
         using var s2 = Logger.AddScope("Order Id", orderId);
 
-        var orderRequest = OrderSide.Buy
-            .StopLimit(executionDecision.Symbol, OrderQuantity.FromInt64(quantity), executionDecision.Stop, executionDecision.Limit)
-            .StopLoss(executionDecision.StopLoss)
-            .WithDuration(TimeInForce.Ioc)
-            .WithClientOrderId(orderId.ToString());
+        OrderBase orderRequest;
+        
+        if (executionDecision.Action == TradeAction.Buy)
+        {
+            orderRequest = OrderSide.Buy
+                .StopLimit(
+                    executionDecision.Symbol,
+                    OrderQuantity.FromInt64(quantity),
+                    executionDecision.Stop!.Value,
+                    executionDecision.Limit!.Value)
+                .StopLoss(executionDecision.StopLoss!.Value)
+                .WithDuration(TimeInForce.Day)
+                .WithClientOrderId(orderId.ToString());
+        }
+        else
+        {
+            orderRequest = OrderSide.Sell
+                .Market(executionDecision.Symbol, OrderQuantity.FromInt64(quantity))
+                .WithDuration(TimeInForce.Gtc)
+                .WithClientOrderId(orderId.ToString());
+        }
 
-        Logger.Information("Submitting Buy Order to Alpaca API {@OrderRequest}", orderRequest);
+        Logger.Information("Submitting Order to Alpaca API {@orderRequest}", orderRequest);
 
         var submittedOrder = await this.tradingClient.PostOrderAsync(orderRequest);
 
-        Logger.Information("Successfully Executed Buy Order. {@order}", submittedOrder);
+        Logger.Information("Successfully Executed Order. {@order}", submittedOrder);
 
-        var orderEntity = MakeOrder(submittedOrder, executionDecision);
+        var orderEntity = MakeOrder(submittedOrder);
 
         return orderEntity;
     }
@@ -71,40 +122,7 @@ public class AlpacaBrokerService : IBrokerService
         var order = await this.tradingClient.PatchOrderAsync(changeOrderRequest);
     }
 
-    public async Task<Order> ExecuteSellOrderAsync(ExecutionDecision executionDecision, int quantity)
-    {
-        if (executionDecision.Action != TradeAction.Sell)
-        {
-            throw new ArgumentException("Trade Execution must be a Sell.");
-        }
-
-        var orderId = Guid.NewGuid().ToString();
-
-        using var s1 = Logger.AddScope("Execution Decision", executionDecision, destructureObject: true);
-        using var s2 = Logger.AddScope("Order Id", orderId);
-
-        Logger.Information("Submitting Sell Order to Alpaca API.");
-
-        var orderRequest = new NewOrderRequest(
-            symbol: executionDecision.Symbol,
-            quantity: OrderQuantity.FromInt64(quantity),
-            side: OrderSide.Sell,
-            type: OrderType.Market,
-            duration: TimeInForce.Fok)
-        {
-            ClientOrderId = orderId,
-        };
-
-        var submitttedOrder = await this.tradingClient.PostOrderAsync(orderRequest);
-
-        Logger.Information("Successfully Executed Sell Order. {@order}", submitttedOrder);
-
-        var orderEntity = MakeOrder(submitttedOrder, executionDecision);
-
-        return orderEntity;
-    }
-
-    private static Order MakeOrder(IOrder order, ExecutionDecision executionDecision)
+    private static Order MakeOrder(IOrder order)
     {
         return new Order()
         {
@@ -112,7 +130,6 @@ public class AlpacaBrokerService : IBrokerService
             Symbol = order.Symbol,
             TimeInForce = MakeTimeInForce(order.TimeInForce),
             AssetClass = MakeAssetClass(order.AssetClass),
-            OrderedPrice = executionDecision.Price,
             FilledPrice = order.AverageFillPrice,
             CreatedAt = order.CreatedAtUtc!.Value,
             LimitPrice = order.LimitPrice,
@@ -120,7 +137,6 @@ public class AlpacaBrokerService : IBrokerService
             OrderType = MakeOrderType(order.OrderType),
             Quantity = (int)order.IntegerQuantity,
             StopOrderPrice = order.StopPrice,
-            StopLossPrice = executionDecision.StopLoss,
             TrailPercent = order.TrailOffsetInPercent,
             TrailPrice = order.TrailOffsetInDollars,
             CancelledAt = order.CancelledAtUtc,
@@ -128,55 +144,76 @@ public class AlpacaBrokerService : IBrokerService
             FailedAt = order.FailedAtUtc,
             FilledAt = order.FilledAtUtc,
             UpdatedAt = order.UpdatedAtUtc,
-            Legs = order.Legs
-                .Select((leg) => MakeOrder(leg, executionDecision))
-                .ToList(),
+            Legs = order.Legs.Select(MakeOrder).ToList(),
         };
     }
 
-    private static Domain.Purchase.Enums.AssetClass MakeAssetClass(AssetClass assetClass)
+    private static Position MakePosition(IPosition position)
+    {
+        return new Position(position.AssetId)
+        {
+            Symbol = position.Symbol,
+            Quantity = (int)position.IntegerQuantity,
+            AverageEntryPrice = position.AverageEntryPrice,
+            AssetClass = MakeAssetClass(position.AssetClass),
+            Side = MakePositionSide(position.Side),
+            MarketValue = position.MarketValue,
+        };
+    }
+
+    private static Domain.Common.Enums.AssetClass MakeAssetClass(AssetClass assetClass)
     {
         return assetClass switch
         {
-            AssetClass.UsEquity => Domain.Purchase.Enums.AssetClass.Stocks,
-            AssetClass.Crypto => Domain.Purchase.Enums.AssetClass.Crypto,
-            _ => throw new ArgumentOutOfRangeException(nameof(assetClass), assetClass, null)
+            AssetClass.UsEquity => Domain.Common.Enums.AssetClass.Stocks,
+            AssetClass.Crypto => Domain.Common.Enums.AssetClass.Crypto,
+            _ => throw new ArgumentOutOfRangeException(nameof(assetClass), assetClass, null),
         };
     }
 
-    private static Domain.Purchase.Enums.OrderSide MakeOrderSide(OrderSide orderSide)
+    private static Domain.Trading.Purchases.Enums.OrderSide MakeOrderSide(OrderSide orderSide)
     {
         return orderSide switch
         {
-            OrderSide.Buy => Domain.Purchase.Enums.OrderSide.Buy,
-            OrderSide.Sell => Domain.Purchase.Enums.OrderSide.Sell,
-            _ => throw new ArgumentOutOfRangeException(nameof(orderSide), orderSide, null)
+            OrderSide.Buy => Domain.Trading.Purchases.Enums.OrderSide.Buy,
+            OrderSide.Sell => Domain.Trading.Purchases.Enums.OrderSide.Sell,
+            _ => throw new ArgumentOutOfRangeException(nameof(orderSide), orderSide, null),
         };
     }
 
-    private static Domain.Purchase.Enums.OrderType MakeOrderType(OrderType orderType)
+    private static Domain.Trading.Purchases.Enums.OrderType MakeOrderType(OrderType orderType)
     {
         return orderType switch
         {
-            OrderType.Market => Domain.Purchase.Enums.OrderType.Market,
-            OrderType.Stop => Domain.Purchase.Enums.OrderType.Stop,
-            OrderType.Limit => Domain.Purchase.Enums.OrderType.Limit,
-            OrderType.StopLimit => Domain.Purchase.Enums.OrderType.StopLimit,
-            OrderType.TrailingStop => Domain.Purchase.Enums.OrderType.TrailingStop,
-            _ => throw new ArgumentOutOfRangeException(nameof(orderType), orderType, null)
+            OrderType.Market => Domain.Trading.Purchases.Enums.OrderType.Market,
+            OrderType.Stop => Domain.Trading.Purchases.Enums.OrderType.Stop,
+            OrderType.Limit => Domain.Trading.Purchases.Enums.OrderType.Limit,
+            OrderType.StopLimit => Domain.Trading.Purchases.Enums.OrderType.StopLimit,
+            OrderType.TrailingStop => Domain.Trading.Purchases.Enums.OrderType.TrailingStop,
+            _ => throw new ArgumentOutOfRangeException(nameof(orderType), orderType, null),
         };
     }
 
-    private static Domain.Purchase.Enums.TimeInForce MakeTimeInForce(TimeInForce timeInForce)
+    private static Domain.Trading.Purchases.Enums.TimeInForce MakeTimeInForce(TimeInForce timeInForce)
     {
         return timeInForce switch
         {
-            TimeInForce.Day => Domain.Purchase.Enums.TimeInForce.Day,
-            TimeInForce.Gtc => Domain.Purchase.Enums.TimeInForce.GoodTilCancel,
-            TimeInForce.Opg => Domain.Purchase.Enums.TimeInForce.MarketOpen,
-            TimeInForce.Fok => Domain.Purchase.Enums.TimeInForce.FillOrKill,
-            TimeInForce.Cls => Domain.Purchase.Enums.TimeInForce.MarketClose,
-            _ => throw new ArgumentOutOfRangeException(nameof(timeInForce), timeInForce, null)
+            TimeInForce.Day => Domain.Trading.Purchases.Enums.TimeInForce.Day,
+            TimeInForce.Gtc => Domain.Trading.Purchases.Enums.TimeInForce.GoodTilCancel,
+            TimeInForce.Opg => Domain.Trading.Purchases.Enums.TimeInForce.MarketOpen,
+            TimeInForce.Fok => Domain.Trading.Purchases.Enums.TimeInForce.FillOrKill,
+            TimeInForce.Cls => Domain.Trading.Purchases.Enums.TimeInForce.MarketClose,
+            _ => throw new ArgumentOutOfRangeException(nameof(timeInForce), timeInForce, null),
+        };
+    }
+
+    private static Domain.Trading.Enums.PositionSide MakePositionSide(PositionSide position)
+    {
+        return position switch
+        {
+            PositionSide.Long => Domain.Trading.Enums.PositionSide.Long,
+            PositionSide.Short => Domain.Trading.Enums.PositionSide.Short,
+            _ => throw new ArgumentOutOfRangeException(nameof(position), position, null),
         };
     }
 }

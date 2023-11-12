@@ -14,11 +14,9 @@ public class Order
     public required OrderType OrderType { get; init; }
     public required TimeInForce TimeInForce { get; init; }
     public required decimal? StopOrderPrice { get; init; }
-    public required decimal? StopLossPrice { get; init; }
     public required decimal? LimitPrice { get; init; }
     public required decimal? TrailPrice { get; init; }
     public required decimal? TrailPercent { get; init; }
-    public required decimal OrderedPrice { get; init; }
     public required decimal? FilledPrice { get; set; }
     public required virtual List<Order> Legs { get; init; }
     public required DateTime CreatedAt { get; init; }

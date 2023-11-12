@@ -24,10 +24,6 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasPrecision(7, 2);
 
         builder
-            .Property(x => x.StopLossPrice)
-            .HasPrecision(7, 2);
-
-        builder
             .Property(x => x.LimitPrice)
             .HasPrecision(7, 2);
 
@@ -38,11 +34,6 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder
             .Property(x => x.TrailPercent)
             .HasPrecision(3, 2);
-
-        builder
-            .Property(x => x.OrderedPrice)
-            .HasPrecision(7, 2)
-            .IsRequired();
 
         builder
             .Property(x => x.FilledPrice)

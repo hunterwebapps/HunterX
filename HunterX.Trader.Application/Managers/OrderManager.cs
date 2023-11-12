@@ -1,8 +1,7 @@
-﻿using HunterX.Trader.Application.Interfaces;
-using HunterX.Trader.Common.Logging;
-using HunterX.Trader.Domain.Purchase.Interfaces;
-using HunterX.Trader.Domain.Purchase.ValueObjects;
-using HunterX.Trader.Domain.StrategySelection.Strategies.DecisionData.ValueObjects;
+﻿using HunterX.Trader.Domain.Common.Interfaces.Repositories;
+using HunterX.Trader.Domain.Common.Interfaces.Services;
+using HunterX.Trader.Domain.Trading.Purchases.Interfaces;
+using HunterX.Trader.Domain.Trading.Purchases.ValueObjects;
 
 namespace HunterX.Trader.Application.Managers;
 
@@ -21,46 +20,35 @@ public class OrderManager
         this.orderStreamingService.OrderFilled += HandleOrderFilled;
     }
 
-    private readonly SemaphoreSlim executionLock = new(1, 1);
-    public async Task ExecuteDecisionAsync(ExecutionDecision executionDecision)
+    public async Task SyncOrderDataAsync()
     {
-        await this.executionLock.WaitAsync();
+        var openTrackedOrders = await this.orderRepository.GetOpenOrdersAsync();
 
-        try
+        foreach (var openOrder in openTrackedOrders)
         {
-            var buyingPower = await this.brokerService.GetBuyingPowerAsync();
+            // TODO: Confirm if any properties have changed.
+            var order = await this.brokerService.GetOrderByIdAsync(openOrder.OrderId);
 
-            var maxRiskPrice = buyingPower * 0.02m;
-
-            var riskPerShare = executionDecision.Price - (executionDecision.Stop ?? 0);
-
-            var shares = (int)Math.Floor(maxRiskPrice / riskPerShare);
-
-            if (shares * executionDecision.Price > buyingPower)
+            await this.orderRepository.UpdateOrderAsync(new OrderUpdated()
             {
-                shares = (int)Math.Floor(buyingPower / executionDecision.Price);
-            }
-
-            if (shares == 0)
-            {
-                var logMessage = "Not enough buying power to execute buy order for {symbol} at ${price} with {shares} shares based on a max risk price of {maxRiskPrice} and risk per share of {riskPerShare}";
-                Logger.Warning(logMessage, executionDecision.Symbol, executionDecision.Price, shares, maxRiskPrice, riskPerShare);
-                return;
-            }
-            else
-            {
-                var logMessage = "Executing Buy Order for {symbol} at ${price} with {shares} shares based on a max risk price of {maxRiskPrice} and risk per share of {riskPerShare}";
-                Logger.Information(logMessage, executionDecision.Symbol, executionDecision.Price, shares, maxRiskPrice, riskPerShare);
-
-                var order = await this.brokerService.ExecuteBuyOrderAsync(executionDecision, shares);
-
-                await this.orderRepository.SaveOrderAsync(order);
-            }
-
+                CancelledAt = order.CancelledAt,
+                ExpiredAt = order.ExpiredAt,
+                FailedAt = order.FailedAt,
+                FilledAt = order.FilledAt,
+                FilledPrice = order.FilledPrice,
+                OrderId = order.OrderId,
+                Symbol = order.Symbol,
+                UpdatedAt = order.UpdatedAt,
+            });
         }
-        finally
+
+        var openOrders = await this.brokerService.GetOpenOrdersAsync();
+
+        var openUntrackedOrders = openOrders.Where(x => !openTrackedOrders.Any(y => y.OrderId == x.OrderId));
+
+        foreach (var openUntrackedOrder in openUntrackedOrders)
         {
-            this.executionLock.Release();
+            await this.orderRepository.SaveOrderAsync(openUntrackedOrder);
         }
     }
 

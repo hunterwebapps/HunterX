@@ -1,7 +1,6 @@
 ﻿using HunterX.Trader.Common.Configuration;
 using HunterX.Trader.Common.Logging;
-using HunterX.Trader.Domain.Purchase.ValueObjects;
-using HunterX.Trader.Domain.StrategySelection.ValueObjects;
+using HunterX.Trader.Domain.Trading.StrategySelections.ValueObjects;
 using HunterX.Trader.Infrastructure.Services.MarketData.Polygon.Models.Holidays;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -32,7 +31,7 @@ public class PolygonDataService
         var url = $"{apiDomain}/v1/marketstatus/upcoming";
         var request = new HttpRequestMessage(HttpMethod.Get, url);
         var cancellationToken = new CancellationToken(false);
-        var response = await apiThrottler.ThrottledRequestAsync(() => client.SendAsync(request, cancellationToken), cancellationToken);
+        var response = await this.apiThrottler.ThrottledRequestAsync(() => client.SendAsync(request, cancellationToken), cancellationToken);
         var json = await response.Content.ReadAsStringAsync();
         var result = JsonSerializer.Deserialize<PolygonUpcomingMarketStatusResponse[]>(json);
 

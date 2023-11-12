@@ -1,5 +1,5 @@
-﻿using HunterX.Trader.Application.Interfaces;
-using HunterX.Trader.Domain.StrategySelection.Strategies.DecisionData.ValueObjects;
+﻿using HunterX.Trader.Domain.Common.Interfaces.Services;
+using HunterX.Trader.Domain.Trading.StrategySelections.Strategies.DecisionData.ValueObjects;
 using MassTransit;
 
 namespace HunterX.Trader.Infrastructure.Messaging;
@@ -13,7 +13,7 @@ public class StockFeedPublisher : ISymbolFeedService
         this.bus = bus;
     }
 
-    public async Task SubmitSymbolsForProcessingAsync(IEnumerable<StockBasics> stocks)
+    public async Task SubmitSymbolsForProcessingAsync(IEnumerable<Asset> stocks)
     {
         await this.bus.PublishBatch(stocks);
     }

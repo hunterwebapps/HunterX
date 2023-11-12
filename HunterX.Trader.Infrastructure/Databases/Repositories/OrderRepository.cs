@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
-using HunterX.Trader.Application.Interfaces;
-using HunterX.Trader.Domain.Purchase.ValueObjects;
+using HunterX.Trader.Domain.Common.Interfaces.Repositories;
+using HunterX.Trader.Domain.Trading.Purchases.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
 namespace HunterX.Trader.Infrastructure.Databases.Repositories;
@@ -16,7 +16,7 @@ public class OrderRepository : IOrderRepository
         this.mapper = mapper;
     }
 
-    public async Task<IReadOnlyList<Order>> GetOrdersAsync()
+    public async Task<IReadOnlyList<Order>> GetOpenOrdersAsync()
     {
         var entities = await this.tradingDbContext.Orders.ToListAsync();
 
@@ -25,13 +25,24 @@ public class OrderRepository : IOrderRepository
         return orders;
     }
 
-    public async Task<Order> GetOrderAsync(Guid orderId)
+    public async Task<Order> GetOrderByIdAsync(Guid orderId)
     {
         var entity = await this.tradingDbContext.Orders.FindAsync(orderId);
 
         var order = this.mapper.Map<Order>(entity);
 
         return order;
+    }
+
+    public async Task<IList<Order>> GetOrdersBySymbolAsync(string symbol)
+    {
+        var entities = await this.tradingDbContext.Orders
+            .Where(x => x.Symbol == symbol)
+            .ToListAsync();
+
+        var orders = this.mapper.Map<IList<Order>>(entities);
+
+        return orders;
     }
 
     public async Task SaveOrderAsync(Order order)

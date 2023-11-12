@@ -1,5 +1,5 @@
 ﻿using HunterX.Trader.Domain.Common.Enums;
-using HunterX.Trader.Domain.StrategySelection.ValueObjects;
+using HunterX.Trader.Domain.Trading.StrategySelections.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 

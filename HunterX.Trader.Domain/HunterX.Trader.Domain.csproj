@@ -11,7 +11,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="StrategySelection\Strategies\ValueObjects\" />
+    <Folder Include="Trading\StrategySelections\Strategies\ValueObjects\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HunterX.Trader.Common\HunterX.Trader.Common.csproj" />
   </ItemGroup>
 
 </Project>
